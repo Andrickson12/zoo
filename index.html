@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Panda Zoo</title>
+    <style>
+      body {
+        background-color: #1a1a1a;
+        color: #f0f0f0;
+        font-family: sans-serif;
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+      input {
+        background: #2a2a2a;
+        color: #f0f0f0;
+        border: 1px solid #444;
+        padding: 8px;
+        margin: 4px;
+        border-radius: 4px;
+      }
+      button {
+        background: #3a3a3a;
+        color: #f0f0f0;
+        border: 1px solid #555;
+        padding: 8px 16px;
+        margin: 4px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #4a4a4a;
+      }
+      section {
+        border: 1px solid #333;
+        padding: 16px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Panda Zoo</h1>
+
+    <!-- Register -->
+    <section>
+      <h2>Register</h2>
+      <input id="reg-name" placeholder="Name" />
+      <input id="reg-email" placeholder="Email" />
+      <input id="reg-password" type="password" placeholder="Password" />
+      <button onclick="register()">Register</button>
+      <p id="reg-msg"></p>
+    </section>
+
+    <!-- Login -->
+    <section>
+      <h2>Login</h2>
+      <input id="email" placeholder="Email" />
+      <input id="password" type="password" placeholder="Password" />
+      <button onclick="login()">Login</button>
+      <p id="auth-msg"></p>
+    </section>
+
+    <!-- Add Panda -->
+    <section>
+      <h2>Add Panda</h2>
+      <input id="pname" placeholder="Name" />
+      <input id="page" placeholder="Age" type="number" />
+      <input id="pweight" placeholder="Weight" type="number" />
+      <input id="phabitat" placeholder="Habitat" />
+      <button onclick="addPanda()">Add Panda</button>
+      <p id="add-msg"></p>
+    </section>
+
+    <!-- All Pandas -->
+    <section>
+      <h2>All Pandas</h2>
+      <button onclick="getPandas()">Load Pandas</button>
+      <ul id="panda-list"></ul>
+    </section>
+
+    <script>
+      const API = "http://localhost:3000/api/v1";
+      let token = "";
+
+      async function register() {
+        const name = document.getElementById("reg-name").value;
+        const email = document.getElementById("reg-email").value;
+        const password = document.getElementById("reg-password").value;
+
+        const res = await fetch(`${API}/auth/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password }),
+        });
+
+        const data = await res.json();
+        if (data.errors) {
+          document.getElementById("reg-msg").textContent = data.errors.map((e) => e.message).join(", ");
+        } else {
+          document.getElementById("reg-msg").textContent = data.message;
+        }
+      }
+
+      async function login() {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        const res = await fetch(`${API}/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await res.json();
+        if (data.token) {
+          token = data.token;
+          document.getElementById("auth-msg").textContent = "Logged in!";
+        } else {
+          document.getElementById("auth-msg").textContent = data.message;
+        }
+      }
+
+      async function addPanda() {
+        const res = await fetch(`${API}/pandas`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: document.getElementById("pname").value,
+            age: Number(document.getElementById("page").value),
+            weight: Number(document.getElementById("pweight").value),
+            habitat: document.getElementById("phabitat").value,
+          }),
+        });
+
+        const data = await res.json();
+        if (data.name) {
+          document.getElementById("add-msg").textContent = `${data.name} added!`;
+          getPandas();
+        } else if (data.errors) {
+          document.getElementById("add-msg").textContent = data.errors.map((e) => e.message).join(", ");
+        } else {
+          document.getElementById("add-msg").textContent = data.message;
+        }
+      }
+
+      async function deletePanda(id) {
+        await fetch(`${API}/pandas/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        getPandas();
+      }
+
+      async function getPandas() {
+        const res = await fetch(`${API}/pandas`);
+        const data = await res.json();
+        const list = document.getElementById("panda-list");
+        list.innerHTML = "";
+        data.pandas.forEach((p) => {
+          const li = document.createElement("li");
+          li.textContent = `${p.name} | Age: ${p.age} | Weight: ${p.weight}kg | Habitat: ${p.habitat}`;
+          const btn = document.createElement("button");
+          btn.textContent = "Delete";
+          btn.onclick = () => deletePanda(p._id);
+          li.appendChild(btn);
+          list.appendChild(li);
+        });
+      }
+    </script>
+  </body>
+</html>
