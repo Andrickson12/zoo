@@ -32,6 +32,14 @@
       button:hover {
         background: #4a4a4a;
       }
+      button.green {
+        background: #22c55e;
+        color: #000;
+        border: none;
+      }
+      button.green:hover {
+        background: #16a34a;
+      }
       section {
         border: 1px solid #333;
         padding: 16px;
@@ -58,7 +66,7 @@
       <h2>Login</h2>
       <input id="email" placeholder="Email" />
       <input id="password" type="password" placeholder="Password" />
-      <button onclick="login()">Login</button>
+      <button class="green" onclick="login()">Login</button>
       <p id="auth-msg"></p>
     </section>
 
