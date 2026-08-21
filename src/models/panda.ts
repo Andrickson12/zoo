@@ -10,7 +10,7 @@ const pandaSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Zookeeper",
       required: true,
-      index: true
+      index: true,
     },
   },
   { timestamps: true },

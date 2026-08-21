@@ -71,13 +71,21 @@ export const update = async (
   next: NextFunction,
 ) => {
   try {
-    const panda = await Panda.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    const panda = await Panda.findById(req.params.id);
     if (!panda) {
       res.status(404).json({ message: "Panda not found" });
       return;
     }
+
+    // only the zookeeper who added it can update it
+    if (panda.addedBy.toString() !== (req as any).zookeeperId) {
+      res.status(403).json({ message: "Not your panda" });
+      return;
+    }
+
+    Object.assign(panda, req.body);
+    await panda.save();
+
     res.json(panda);
   } catch (err) {
     next(err);
@@ -91,11 +99,20 @@ export const remove = async (
   next: NextFunction,
 ) => {
   try {
-    const panda = await Panda.findByIdAndDelete(req.params.id);
+    const panda = await Panda.findById(req.params.id);
     if (!panda) {
       res.status(404).json({ message: "Panda not found" });
       return;
     }
+
+    // only the zookeeper who added it can delete it
+    if (panda.addedBy.toString() !== (req as any).zookeeperId) {
+      res.status(403).json({ message: "Not your panda" });
+      return;
+    }
+
+    await panda.deleteOne();
+
     res.json({ message: "Panda deleted" });
   } catch (err) {
     next(err);
